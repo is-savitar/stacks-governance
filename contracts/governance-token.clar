@@ -1,6 +1,3 @@
-;; File: contracts/governance-token.clar
-;; Commit Message: Initialize governance token contract with basic token functionality
-
 (define-fungible-token governance-token)
 
 ;; Define error codes for token operations

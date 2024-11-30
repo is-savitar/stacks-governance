@@ -20,11 +20,18 @@
   )
 )
 
+;; Transfer function
+(define-public (transfer (amount uint) (sender principal) (recipient principal))
+  (begin
+    (asserts! (is-eq tx-sender sender) (err u101))
+    (ok (ft-transfer? governance-token amount sender recipient))
+  )
+)
+
 ;; Get balance function
 (define-read-only (get-balance (account principal))
   (ok (ft-get-balance governance-token account))
 )
-
 
 ;; Get token name
 (define-read-only (get-name)
@@ -45,3 +52,4 @@
 (define-read-only (get-decimals)
   (ok (var-get token-decimals))
 )
+

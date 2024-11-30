@@ -25,3 +25,23 @@
   (ok (ft-get-balance governance-token account))
 )
 
+
+;; Get token name
+(define-read-only (get-name)
+  (ok (var-get token-name))
+)
+
+;; Get token symbol
+(define-read-only (get-symbol)
+  (ok (var-get token-symbol))
+)
+
+;; Get token URI
+(define-read-only (get-token-uri)
+  (ok (var-get token-uri))
+)
+
+;; Get token decimals
+(define-read-only (get-decimals)
+  (ok (var-get token-decimals))
+)

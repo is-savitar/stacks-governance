@@ -46,3 +46,78 @@
     (ok proposal-id)
   )
 )
+
+(import governance-token)
+
+(define-constant ZERO u0)
+(define-constant ONE u1)
+
+;; Governance token trait
+(trait governance-token-trait
+  (get-balance (owner principal) -> uint)
+)
+
+
+;; Proposal structure
+(define-data-var proposals
+  { proposal-id: uint }
+  {
+    proposer: principal,
+    description: string,
+    start-block-height: uint,
+    end-block-height: uint,
+    vote-count-for: uint,
+    vote-count-against: uint
+  }
+)
+
+;; Create a new proposal
+(define-public (create-proposal (description string) (end-block-height uint) (governance-token <governance-token-trait>))
+  (let
+    (
+      (proposal-id (+ (length (get proposals)) ONE))
+    )
+    (map-set proposals
+      { proposal-id: proposal-id }
+      {
+        proposer: tx-sender,
+        description: description,
+        start-block-height: block-height,
+        end-block-height: end-block-height,
+        vote-count-for: ZERO,
+        vote-count-against: ZERO
+      }
+    )
+    (ok proposal-id)
+  )
+)
+
+(define-map votes
+  { voter: principal, proposal-id: uint }
+  { in-favor: bool }
+)
+
+;; Vote on a proposal
+(define-public (vote (proposal-id uint) (in-favor bool) (governance-token <governance-token-trait>))
+  (let
+    (
+      (proposal (unwrap! (map-get? proposals { proposal-id: proposal-id }) (err u300)))
+      (voter-balance (unwrap-panic (contract-call? governance-token get-balance tx-sender)))
+    )
+    (asserts! (< block-height (get end-block-height proposal)) (err u301))
+    (asserts! (is-none (map-get? votes { voter: tx-sender, proposal-id: proposal-id })) (err u302))
+    (asserts! (> voter-balance u0) (err u303))
+    (map-set votes
+      { voter: tx-sender, proposal-id: proposal-id }
+      { in-favor: in-favor }
+    )
+    (map-set proposals
+      { proposal-id: proposal-id }
+      (merge proposal {
+        vote-count-for: (if in-favor (+ (get vote-count-for proposal) voter-balance) (get vote-count-for proposal)),
+        vote-count-against: (if in-favor (get vote-count-against proposal) (+ (get vote-count-against proposal) voter-balance))
+      })
+    )
+    (ok true)
+  )
+)
